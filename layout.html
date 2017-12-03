@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <div>
+        <h3>{{.Name}}</h3>
+        {{range .Users}}
+            {{ if ne .Sudo true }}
+                <p>{{.Name}}: Sudo:<input type="checkbox" value="sudo" checked="checked"/></p>
+            {{else}}
+                <p>{{.Name}}: Sudo:<input type="checkbox" value="sudo" /></p>
+            {{end}}
+        {{end}}
+    </div>
+    <div>
+        <h3>UserAdd</h3>
+        <p>
+            <form action="/useradd" method="post">
+                <input type="text" name="userlist" placeholder="username"/></br>
+                <input type="submit" value="送信"/></br>
+            </form>
+        </p>
+    </div>
+</body>
+</html>
