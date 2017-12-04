@@ -8,9 +8,9 @@
         <h3>{{.Name}}</h3>
         {{range .Users}}
             {{ if ne .Sudo true }}
-                <p>{{.Name}}: Sudo:<input type="checkbox" value="sudo" checked="checked"/></p>
+                <p>{{.Name}}: Sudo:<input id="checkbox" type="checkbox" value="sudo" checked="checked"/></p>
             {{else}}
-                <p>{{.Name}}: Sudo:<input type="checkbox" value="sudo" /></p>
+                <p>{{.Name}}: Sudo:<input id="checkbox" type="checkbox" value="sudo"/></p>
             {{end}}
         {{end}}
     </div>
@@ -23,5 +23,31 @@
             </form>
         </p>
     </div>
+    <div>
+        <h3>UserDel</h3>
+        <p>
+        <form action="/userdel" method="post">
+            <input type="text" name="userlist" placeholder="username"/></br>
+            <input type="submit" value="送信"/></br>
+        </form>
+        </p>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script>
+        $(function () {
+            // ［検索］ボタンクリックで検索開始
+            $('#checkbox').click(function () {
+                $.ajax('/authadd',
+                        {
+                            type: 'post',
+                            data: {username: 'katsukamaru'},
+                            dataType: 'json'
+                        }
+                ).done(function (data) {
+                    window.alert('OK');
+                });
+            });
+        });
+    </script>
 </body>
 </html>

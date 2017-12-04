@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"gatekeeper/keymanage"
 	"html/template"
 	"net/http"
-	"gatekeeper/keymanage"
 )
 
 type Server struct {
@@ -44,11 +44,17 @@ func userAdd_handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func userDel_handler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	s := r.Form.Get("userlist")
+	keymanage.UserDel(s)
 	fmt.Fprintf(w, "userDel_handler")
 }
 
 func authAdd_handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "authAdd_handler")
+	r.ParseForm()
+	s := r.Form.Get("username")
+	keymanage.AuthAdd(s)
+	fmt.Fprintf(w, "{\"response\" : \"AuthAdd_handler\"}")
 }
 
 func authDel_handler(w http.ResponseWriter, r *http.Request) {

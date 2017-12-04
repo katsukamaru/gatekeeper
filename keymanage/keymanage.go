@@ -1,19 +1,19 @@
 package keymanage
 
 import (
+	"fmt"
+	"golang.org/x/crypto/ssh"
 	"io/ioutil"
 	"log"
-	"golang.org/x/crypto/ssh"
 	"strings"
-	"fmt"
 )
 
 // expected: root:x:0:0:root:/root:/bin/bash
 func convertJson(str string) string {
 	lines := strings.Split(str, "\n")
-	for _,v := range lines  {
-		split := strings.Split(v,":")
-		for i,v := range split{
+	for _, v := range lines {
+		split := strings.Split(v, ":")
+		for i, v := range split {
 			if i == 0 {
 				fmt.Println(v)
 			}
@@ -23,11 +23,12 @@ func convertJson(str string) string {
 }
 
 // パスワードの初期化　rootのみの実行？
-func initPassword()  {
+func initPassword() {
 
 }
+
 // ユーザの一覧表示
-func usersList()  {
+func UsersList() {
 	var cmd string = ""
 	var output []byte = nil
 	var err error = nil
@@ -35,7 +36,7 @@ func usersList()  {
 	cmd = "cat /etc/passwd | grep /bin/bash"
 	output, err = doCmd(cmd)
 	if err != nil {
-		log.Fatalf("[Execute Command] %v, %v", cmd , err)
+		log.Fatalf("[Execute Command] %v, %v", cmd, err)
 	}
 	fmt.Println(string(output))
 }
@@ -58,27 +59,35 @@ func UserAdd(username string) {
 	cmd = "sudo useradd " + username
 	_, err = doCmd(cmd)
 	if err != nil {
-		log.Fatalf("[Execute Command] %v, %v", cmd , err)
+		log.Fatalf("[Execute Command] %v, %v", cmd, err)
 	}
 }
 
 // ユーザの削除
-func userDel(username string)  {
+func UserDel(username string) {
 	// rootの扱い
 	var cmd string = ""
-	// var output []byte = nil
+	var output []byte = nil
 	var err error = nil
 
+	// 追加しようとしているユーザがすでに存在するかチェックする
+	cmd = "cat /etc/passwd | grep -e \"^" + username + ":\""
+	output, _ = doCmd(cmd)
+	//　ユーザが存在しない場合はreturn
+	if output != nil && len(output) == 0 {
+		log.Println("target user is already deleted: " + username)
+		return
+	}
 	cmd = "sudo userdel " + username
 	_, err = doCmd(cmd)
 	if err != nil {
-		log.Fatalf("[Execute Command] %v, %v", cmd , err)
+		log.Fatalf("[Execute Command] %v, %v", cmd, err)
 	}
 }
 
 // ユーザに権限追加
 // sudoが付いているユーザにつけようとしても問題ない
-func authAdd(username string) {
+func AuthAdd(username string) {
 	var cmd string = ""
 	// var output []byte = nil
 	var err error = nil
@@ -86,7 +95,7 @@ func authAdd(username string) {
 	cmd = "sudo usermod -aG wheel " + username
 	_, err = doCmd(cmd)
 	if err != nil {
-		log.Fatalf("[Execute Command] %v, %v", cmd , err)
+		log.Fatalf("[Execute Command] %v, %v", cmd, err)
 	}
 }
 
@@ -98,7 +107,7 @@ func authAdd(username string) {
 //削除したい副グループを除し、「,」で繋ぐ。
 //-Gオプションで削除した副グループを省いた一覧を副グループとして設定する。
 //このように副グループの削除は少々面倒な作業になる。
-func delAuth()  {
+func delAuth() {
 	//var cmd string = ""
 	//// var output []byte = nil
 	//var err error = nil
@@ -125,7 +134,7 @@ func doCmd(cmd string) ([]byte, error) {
 	}
 
 	config := &ssh.ClientConfig{
-		User: user,
+		User:            user,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(key),
@@ -134,7 +143,7 @@ func doCmd(cmd string) ([]byte, error) {
 
 	conn, err := ssh.Dial("tcp", ip+":"+port, config)
 	if err != nil {
-		log.Fatalf("%v" , err)
+		log.Fatalf("%v", err)
 	}
 	defer conn.Close()
 
