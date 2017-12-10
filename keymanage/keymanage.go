@@ -8,18 +8,30 @@ import (
 	"strings"
 )
 
+type Server struct {
+	Name  string
+	Users []User
+}
+
+type User struct {
+	Name string
+	Sudo bool
+}
+
 // expected: root:x:0:0:root:/root:/bin/bash
-func convertJson(str string) string {
+func convertJson(str string) []string {
+	var list []string
 	lines := strings.Split(str, "\n")
 	for _, v := range lines {
 		split := strings.Split(v, ":")
 		for i, v := range split {
 			if i == 0 {
 				fmt.Println(v)
+				list = append(list, v)
 			}
 		}
 	}
-	return ""
+	return list
 }
 
 // パスワードの初期化　rootのみの実行？
@@ -28,8 +40,8 @@ func initPassword() {
 }
 
 // ユーザの一覧表示
-func UsersList() {
-	var cmd string = ""
+func UsersList() []User {
+	var cmd = ""
 	var output []byte = nil
 	var err error = nil
 
@@ -38,13 +50,22 @@ func UsersList() {
 	if err != nil {
 		log.Fatalf("[Execute Command] %v, %v", cmd, err)
 	}
-	fmt.Println(string(output))
+	list := convertJson(string(output))
+	var Users []User
+	for _, value := range list {
+		// root は除く
+		if value == "root" || value == "" {
+			continue
+		}
+		Users = append(Users, User{value, true})
+	}
+	return Users
 }
 
 // ユーザの追加
 // すでに対象サーバにユーザが存在する場合は何もせずにreturnする
 func UserAdd(username string) {
-	var cmd string = ""
+	var cmd = ""
 	var output []byte = nil
 	var err error = nil
 
@@ -66,7 +87,7 @@ func UserAdd(username string) {
 // ユーザの削除
 func UserDel(username string) {
 	// rootの扱い
-	var cmd string = ""
+	var cmd = ""
 	var output []byte = nil
 	var err error = nil
 
@@ -88,7 +109,7 @@ func UserDel(username string) {
 // ユーザに権限追加
 // sudoが付いているユーザにつけようとしても問題ない
 func AuthAdd(username string) {
-	var cmd string = ""
+	var cmd = ""
 	// var output []byte = nil
 	var err error = nil
 
@@ -100,23 +121,31 @@ func AuthAdd(username string) {
 }
 
 // ユーザから権限削除
-//-Gオプション、-aオプションを利用しても、副グループの一部を削除することはできない。
-//もしも複数登録している副グループのうちの１つを削除する場合は、次のような作業手順が考えられる。
-//idコマンドで副グループ一覧を取得する
-//副グループ一覧をクリップボードなどにコピーする。
-//削除したい副グループを除し、「,」で繋ぐ。
-//-Gオプションで削除した副グループを省いた一覧を副グループとして設定する。
-//このように副グループの削除は少々面倒な作業になる。
-func delAuth() {
-	//var cmd string = ""
-	//// var output []byte = nil
-	//var err error = nil
-	//
-	//cmd = "sudo usermod -aG wheel"
-	//_, err = doCmd(cmd)
-	//if err != nil {
-	//	log.Fatalf("[Execute Command] %v, %v", cmd , err)
-	//}
+// id -nG minami -> minami wheel
+// sudo usermod -G minami username
+func delAuth(username string) {
+	var cmd = ""
+	var output []byte = nil
+	var err error = nil
+	cmd = "id -nG " + username
+	output, err = doCmd(cmd)
+	if err != nil {
+		log.Fatalf("[Execute Command] %v, %v", cmd, err)
+	}
+
+	groups := string(output)
+	split := strings.Split(groups, " ")
+	var result []string
+	for _, num := range split {
+		if num != "wheel" {
+			result = append(result, num)
+		}
+	}
+	cmd = "sudo usermod -G minami " + username
+	_, err = doCmd(cmd)
+	if err != nil {
+		log.Fatalf("[Execute Command] %v, %v", cmd, err)
+	}
 }
 
 func doCmd(cmd string) ([]byte, error) {

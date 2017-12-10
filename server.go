@@ -7,20 +7,9 @@ import (
 	"net/http"
 )
 
-type Server struct {
-	Name  string
-	Users []User
-}
-
-type User struct {
-	Name string
-	Sudo bool
-}
-
 func viewHandler(w http.ResponseWriter, r *http.Request) {
-	user1 := User{"user1", true}
-	users := []User{user1}
-	server := Server{"server1", users}
+	users := keymanage.UsersList()
+	server := keymanage.Server{"server1", users}
 	tmpl, err := template.ParseFiles("layout.html")
 	if err != nil {
 		panic(err)
