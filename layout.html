@@ -5,12 +5,13 @@
 </head>
 <body>
     <div>
-        <h3>{{.Name}}</h3>
+        <h3>UserList</h3>
+        <h4>{{.Name}}</h4>
         {{range .Users}}
-            {{ if ne .Sudo true }}
-                <p>{{.Name}}: Sudo:<input id="checkbox" type="checkbox" value="sudo" checked="checked"/></p>
+        {{ if eq .Sudo true }}
+            <p>{{.Name}}: Sudo:<input id="checkbox" class="user" type="checkbox" value="sudo" checked="checked"/></p>
             {{else}}
-                <p>{{.Name}}: Sudo:<input id="checkbox" type="checkbox" value="sudo"/></p>
+                <p>{{.Name}}: Sudo:<input id="checkbox" class="user" type="checkbox" value="sudo"/></p>
             {{end}}
         {{end}}
     </div>
@@ -35,17 +36,23 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script>
         $(function () {
-            // ［検索］ボタンクリックで検索開始
             $('#checkbox').click(function () {
-                $.ajax('/authadd',
-                        {
-                            type: 'post',
-                            data: {username: 'katsukamaru'},
-                            dataType: 'json'
-                        }
-                ).done(function (data) {
-                    window.alert('OK');
-                });
+                var isChecked = $('#checkbox').prop('checked');
+                if (isChecked) {
+                    call_method = '/authadd'
+                } else {
+                    call_method = '/authdell'
+                }
+                console.log(call_method)
+                // $.ajax( call_method,
+                //         {
+                //             type: 'post',
+                //             data: {username: 'katsukamaru'},
+                //             dataType: 'json'
+                //         }
+                // ).done(function (data) {
+                //     window.alert('OK');
+                // });
             });
         });
     </script>

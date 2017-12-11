@@ -34,9 +34,25 @@ func convertJson(str string) []string {
 	return list
 }
 
+// expected: wheel:x:10:katsukamaru,minami
+func wheelUsers(str string) []string {
+	trimed := strings.Split(str, "\n")
+	split := strings.Split(trimed[0], ":")
+	return strings.Split(split[3], ",")
+}
+
 // パスワードの初期化　rootのみの実行？
 func initPassword() {
 
+}
+
+func contains(s []string, e string) bool {
+	for _, v := range s {
+		if e == v {
+			return true
+		}
+	}
+	return false
 }
 
 // ユーザの一覧表示
@@ -51,23 +67,48 @@ func UsersList() []User {
 		log.Fatalf("[Execute Command] %v, %v", cmd, err)
 	}
 	list := convertJson(string(output))
+
+	cmd = "cat /etc/group | grep wheel"
+	output, err = doCmd(cmd)
+	if err != nil {
+		log.Fatalf("[Execute Command] %v, %v", cmd, err)
+	}
+	wheelUsers := wheelUsers(string(output))
+
 	var Users []User
 	for _, value := range list {
 		// root は除く
 		if value == "root" || value == "" {
 			continue
 		}
-		Users = append(Users, User{value, true})
+		if contains(wheelUsers, value) {
+			Users = append(Users, User{value, true})
+			continue
+		}
+		Users = append(Users, User{value, false})
 	}
 	return Users
 }
 
+func setSshConf() {
+
+	// mkdir ~/.ssh
+	// cat pub >> ~/.ssh/authorized_keys
+	// chown -R username:Group ~/.ssh
+	// chmod 700 ~/.ssh
+	// chmod 600 ~/.ssh/authorized_keys
+
+}
+
+// TODO カンマ区切りで入力される想定に対応する
 // ユーザの追加
 // すでに対象サーバにユーザが存在する場合は何もせずにreturnする
 func UserAdd(username string) {
 	var cmd = ""
 	var output []byte = nil
 	var err error = nil
+
+	// var pub = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDGc9KWcrVFgbFuVxMkU4rbfr3wvdI+eZxzb4Ys2BVVt+YUt+RdMcynWq22wofLy5wXyAQDJcaBItytX3TPHCP0HBbd/j403LIUHgFq7IpmfrHNkSs4PkpKsLPt3GTZmBwkqfFH9+6myg237RRUVLk80Rgz1V+JunVGdyc6L8KLqeCZ9xCaL3MkZIz8nm8GmhNNMvHXyxsMQMKjMA5uSQft6Xr12NVuL6we4/qIYS/9GHavjZ4lXj90vUfiHBOd4CoTh+wPDqF4gqHt5Ds8k/ObP0OIKoC/d/angjcAlykjNwaCjamhHC2Tb83hfyLVzbuQq68KnNK+7QVD6ypIFLPH"
 
 	// 追加しようとしているユーザがすでに存在するかチェックする
 	cmd = "cat /etc/passwd | grep -e \"^" + username + ":\""
@@ -183,3 +224,15 @@ func doCmd(cmd string) ([]byte, error) {
 	defer session.Close()
 	return session.Output(cmd)
 }
+
+// --- Must
+// view
+// set .ssh/pub key
+// AuthAdd and AuthDel
+
+// --- Want
+// conf
+// initial password
+// test
+// Login
+// package
